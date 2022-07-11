@@ -59,27 +59,27 @@ void SystemClock_Config(void);
 
 static nrf24l01_t nrf24l01;
 
-static void nrf24l01_event_callback(void *context) {
+static bool running = false;
+static bool rpd = false;
+
+static void nrf24l01_on_event(void *context) {
     nrf24l01_t *nrf = (nrf24l01_t*) context;
 
     nrf24l01_standby(nrf);
     nrf24l01_clear_status(nrf);
-    nrf24l01_flush_tx(nrf);
-    nrf24l01_flush_rx(nrf);
     nrf24l01_listen(nrf);
 }
 
 static void nrf24l01_task_handler(void *context) {
     nrf24l01_t *nrf = (nrf24l01_t*) context;
 
-    nrf24l01_open(nrf, 110, 0xCECECECECE);
     nrf24l01_open(nrf);
     nrf24l01_listen(nrf);
 
     vTaskDelay(1);
 
-#if 1
-    static bool rpd = false;
+#if 0
+
 
     for (;;) {
         nrf24l01_flush_rx(nrf);
@@ -89,14 +89,23 @@ static void nrf24l01_task_handler(void *context) {
 
 #else
 
-    nrf24l01_notify(nrf, &nrf24l01_event_callback, nrf);
+    nrf24l01_notify(nrf, &nrf24l01_on_event, nrf);
 
     for (;;) {
         uint8_t payload[NRF24L01_MAX_PAYLOAD_SIZE];
 
-        if (nrf24l01_channel_available(nrf)) {
+        running = true;
+
+        nrf24l01_flush_tx(nrf);
+        nrf24l01_flush_rx(nrf);
+
+        rpd = nrf24l01_channel_available(nrf);
+
+        if (rpd) {
             nrf24l01_write(nrf, &payload[0], NRF24L01_MAX_PAYLOAD_SIZE);
         }
+
+        running = false;
 
         vTaskDelay(100);
     }

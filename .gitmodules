@@ -1,3 +1,6 @@
 [submodule "nrf24l01"]
 	path = nrf24l01
 	url = https://github.com/dozack/nrf24l01.git
+[submodule "freertos-systemview"]
+	path = freertos-systemview
+	url = https://github.com/dozack/freertos-systemview.git

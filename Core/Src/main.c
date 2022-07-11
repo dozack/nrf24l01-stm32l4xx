@@ -73,6 +73,7 @@ static void nrf24l01_task_handler(void *context) {
     nrf24l01_t *nrf = (nrf24l01_t*) context;
 
     nrf24l01_open(nrf, 110, 0xCECECECECE);
+    nrf24l01_open(nrf);
     nrf24l01_listen(nrf);
 
     vTaskDelay(1);
@@ -135,8 +136,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     {
+        nrf24l01_config_t config = { .address = 0xcecececece, .channel = 110, .retr_count = 3, .retr_delay = 750 };
+
         nrf24l01_hal_attach(&nrf24l01, &nrf24l01_hal_stm32l4xx);
         nrf24l01_initialize(&nrf24l01);
+        nrf24l01_configure(&nrf24l01, &config);
 
         if (nrf24l01_probe(&nrf24l01) < 0) {
             HAL_NVIC_SystemReset();

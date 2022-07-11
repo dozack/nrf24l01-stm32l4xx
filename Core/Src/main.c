@@ -21,6 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "nrf24l01.h"
 #include "nrf24l01_hal_stm32l4xx.h"
 /* USER CODE END Includes */
@@ -53,9 +56,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static nrf24l01_t nrf;
 
-static bool rpd = false;
+static nrf24l01_t nrf24l01;
 
 static void nrf24l01_event_callback(void *context) {
     nrf24l01_t *nrf = (nrf24l01_t*) context;
@@ -65,6 +67,40 @@ static void nrf24l01_event_callback(void *context) {
     nrf24l01_flush_tx(nrf);
     nrf24l01_flush_rx(nrf);
     nrf24l01_listen(nrf);
+}
+
+static void nrf24l01_task_handler(void *context) {
+    nrf24l01_t *nrf = (nrf24l01_t*) context;
+
+    nrf24l01_open(nrf, 110, 0xCECECECECE);
+    nrf24l01_listen(nrf);
+
+    vTaskDelay(1);
+
+#if 1
+    static bool rpd = false;
+
+    for (;;) {
+        nrf24l01_flush_rx(nrf);
+        rpd = nrf24l01_channel_available(nrf);
+        vTaskDelay(1);
+    }
+
+#else
+
+    nrf24l01_notify(nrf, &nrf24l01_event_callback, nrf);
+
+    for (;;) {
+        uint8_t payload[NRF24L01_MAX_PAYLOAD_SIZE];
+
+        if (nrf24l01_channel_available(nrf)) {
+            nrf24l01_write(nrf, &payload[0], NRF24L01_MAX_PAYLOAD_SIZE);
+        }
+
+        vTaskDelay(100);
+    }
+
+#endif
 }
 
 /* USER CODE END 0 */
@@ -92,46 +128,27 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  traceSTART();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
-    nrf24l01_hal_attach(&nrf, &nrf24l01_hal_stm32l4xx);
-    nrf24l01_initialize(&nrf);
 
-    if (nrf24l01_probe(&nrf) < 0) {
-        while (1);
-    }
+    {
+        nrf24l01_hal_attach(&nrf24l01, &nrf24l01_hal_stm32l4xx);
+        nrf24l01_initialize(&nrf24l01);
 
-    nrf24l01_open(&nrf, 110, 0xCECECECECE);
-    nrf24l01_listen(&nrf);
-
-    HAL_Delay(1);
-
-#if 1
-
-    for (;;) {
-        nrf24l01_flush_rx(&nrf);
-        rpd = nrf24l01_channel_available(&nrf);
-        HAL_Delay(1);
-    }
-
-#else
-
-    nrf24l01_notify(&nrf, &nrf24l01_event_callback, &nrf);
-
-    for (;;) {
-        uint8_t payload[NRF24L01_MAX_PAYLOAD_SIZE];
-
-        if (nrf24l01_channel_available(&nrf)) {
-            nrf24l01_write(&nrf, &payload[0], NRF24L01_MAX_PAYLOAD_SIZE);
+        if (nrf24l01_probe(&nrf24l01) < 0) {
+            HAL_NVIC_SystemReset();
         }
 
-        HAL_Delay(100);
+        static StackType_t ITS[configMINIMAL_STACK_SIZE];
+        static StaticTask_t ITC;
+
+        xTaskCreateStatic(&nrf24l01_task_handler, "NRF24", configMINIMAL_STACK_SIZE, &nrf24l01, 6, ITS, &ITC);
+        vTaskStartScheduler();
     }
 
-#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -195,6 +212,36 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer,
+        uint32_t *pulIdleTaskStackSize) {
+
+    static StaticTask_t IdleTaskControl;
+    static StackType_t IdleTaskStack[configMINIMAL_STACK_SIZE];
+
+    *ppxIdleTaskTCBBuffer = &IdleTaskControl;
+    *ppxIdleTaskStackBuffer = &IdleTaskStack[0];
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+#if (configUSE_TIMERS == 1)
+void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer,
+        uint32_t *pulTimerTaskStackSize) {
+
+    static StaticTask_t TimerTaskControl;
+    static StackType_t TimerTaskStack[configTIMER_TASK_STACK_DEPTH];
+
+    *ppxTimerTaskTCBBuffer = &TimerTaskControl;
+    *ppxTimerTaskStackBuffer = &TimerTaskStack[0];
+    *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+}
+#endif
+
+void vApplicationIdleHook(void) {
+}
+
+void vApplicationTickHook(void) {
+}
 
 /* USER CODE END 4 */
 

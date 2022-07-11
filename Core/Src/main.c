@@ -54,6 +54,19 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static nrf24l01_t nrf;
+
+static bool rpd = false;
+
+static void nrf24l01_event_callback(void *context) {
+    nrf24l01_t *nrf = (nrf24l01_t*) context;
+
+    nrf24l01_standby(nrf);
+    nrf24l01_clear_status(nrf);
+    nrf24l01_flush_tx(nrf);
+    nrf24l01_flush_rx(nrf);
+    nrf24l01_listen(nrf);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -84,8 +97,41 @@ int main(void)
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
-  nrf24l01_hal_attach(&nrf, &nrf24l01_hal_stm32l4xx);
-  nrf24l01_initialize(&nrf);
+    nrf24l01_hal_attach(&nrf, &nrf24l01_hal_stm32l4xx);
+    nrf24l01_initialize(&nrf);
+
+    if (nrf24l01_probe(&nrf) < 0) {
+        while (1);
+    }
+
+    nrf24l01_open(&nrf, 110, 0xCECECECECE);
+    nrf24l01_listen(&nrf);
+
+    HAL_Delay(1);
+
+#if 1
+
+    for (;;) {
+        nrf24l01_flush_rx(&nrf);
+        rpd = nrf24l01_channel_available(&nrf);
+        HAL_Delay(1);
+    }
+
+#else
+
+    nrf24l01_notify(&nrf, &nrf24l01_event_callback, &nrf);
+
+    for (;;) {
+        uint8_t payload[NRF24L01_MAX_PAYLOAD_SIZE];
+
+        if (nrf24l01_channel_available(&nrf)) {
+            nrf24l01_write(&nrf, &payload[0], NRF24L01_MAX_PAYLOAD_SIZE);
+        }
+
+        HAL_Delay(100);
+    }
+
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */

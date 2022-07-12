@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 #include "nrf24l01.h"
 #include "nrf24l01_hal_stm32l4xx.h"
@@ -57,60 +58,142 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static nrf24l01_t nrf24l01;
+typedef struct {
+    uint8_t size;
+    uint8_t data[NRF24L01_MAX_PAYLOAD_SIZE];
+}nrf24l01_message_t;
 
-static bool running = false;
-static bool rpd = false;
+typedef struct {
+    uint32_t tx_complete;
+    uint32_t tx_lost;
+    uint32_t tx_postponed;
+
+    uint32_t rx_complete;
+    uint32_t rx_lost;
+} nrf24l01_stats_t;
+
+typedef struct nrf24l01_service {
+    nrf24l01_t          device;
+    nrf24l01_stats_t    stats;
+
+    nrf24l01_message_t  txbuff[16];
+    QueueHandle_t       txq;
+    StaticQueue_t       txc;
+
+    nrf24l01_message_t  rxbuff[16];
+    QueueHandle_t       rxq;
+    StaticQueue_t       rxc;
+} nrf24l01_service_t;
+
+static nrf24l01_service_t service;
 
 static void nrf24l01_on_event(void *context) {
-    nrf24l01_t *nrf = (nrf24l01_t*) context;
+    BaseType_t          xHigherPriorityTaskWoken = pdFALSE;
+    nrf24l01_service_t *svc = (nrf24l01_service_t*) (context);
+    nrf24l01_message_t  message;
+    uint8_t             status;
 
-    nrf24l01_standby(nrf);
-    nrf24l01_clear_status(nrf);
-    nrf24l01_listen(nrf);
+    /* Set device to standby mode to disable its clock */
+    nrf24l01_standby(&svc->device);
+    /* Read and clear status register */
+    status = nrf24l01_clear_status(&svc->device);
+    /* Start listening in order to acquire channel activity measurement */
+    nrf24l01_listen(&svc->device);
+
+    if (status & NRF24L01_STATUS_RX_DR) {
+        /* Read all pending messages */
+        while (nrf24l01_rx_pending(&svc->device) > 0) {
+            /* Fetch message from device */
+            nrf24l01_read(&svc->device, &message.data[0], &message.size);
+            if (xQueueSendFromISR(svc->rxq, &message, &xHigherPriorityTaskWoken) != pdFALSE) {
+                /* Reception complete */
+                svc->stats.rx_complete++;
+            } else {
+                /* Queue is full, message is lost */
+                svc->stats.rx_lost++;
+            }
+        }
+    }
+    if (status & NRF24L01_STATUS_MAX_RT) {
+        /* Flush devices tx fifo in order to release failed transmission */
+        nrf24l01_flush_tx(&svc->device);
+        svc->stats.tx_lost++;
+    }
+    if (status & NRF24L01_STATUS_TX_DS) {
+        /* Transmission complete */
+        svc->stats.tx_complete++;
+    }
+    if (uxQueueMessagesWaitingFromISR(svc->txq) > 0) {
+        /* Outgoing messages available, check channel availability */
+        if (nrf24l01_channel_available(&svc->device)) {
+            /* Fetch outgoing message from queue and transmit */
+            xQueueReceiveFromISR(svc->txq, &message, &xHigherPriorityTaskWoken);
+            nrf24l01_write(&svc->device, &message.data[0], message.size);
+        } else {
+            /* Channel is not available, postpone transmission */
+            svc->stats.tx_postponed++;
+        }
+    }
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-static void nrf24l01_task_handler(void *context) {
-    nrf24l01_t *nrf = (nrf24l01_t*) context;
+static int nrf24l01_service_send(struct nrf24l01_service *svc, nrf24l01_message_t *message) {
 
-    nrf24l01_open(nrf);
-    nrf24l01_listen(nrf);
+    if (xQueueSend(svc->txq, message, 0) == pdTRUE) {
+        nrf24l01_trigger_irq(&svc->device);
+        return (0);
+    }
+
+    return (-1);
+}
+
+static int nrf24l01_service_recv(struct nrf24l01_service *svc, nrf24l01_message_t *message) {
+
+    if (xQueueReceive(svc->rxq, message, 0) == pdTRUE) {
+        return (0);
+    }
+
+    return (-1);
+}
+
+static nrf24l01_message_t g_txmessage;
+static nrf24l01_message_t g_rxmessage;
+
+static void nrf24l01_task_handler(void *context) {
+    struct nrf24l01_service *svc = (struct nrf24l01_service*) (context);
+
+    TickType_t t_act, t_last = 0;
+
+    svc->stats = (nrf24l01_stats_t ) { 0 };
+
+    svc->txq = xQueueCreateStatic(16, sizeof(nrf24l01_message_t), (uint8_t* ) &svc->txbuff[0], &svc->txc);
+    svc->rxq = xQueueCreateStatic(16, sizeof(nrf24l01_message_t), (uint8_t* ) &svc->rxbuff[0], &svc->rxc);
+
+    nrf24l01_notify(&svc->device, &nrf24l01_on_event, svc);
+    nrf24l01_open(&svc->device);
+    nrf24l01_listen(&svc->device);
 
     vTaskDelay(1);
 
-#if 0
-
-
-    for (;;) {
-        nrf24l01_flush_rx(nrf);
-        rpd = nrf24l01_channel_available(nrf);
-        vTaskDelay(1);
-    }
-
-#else
-
-    nrf24l01_notify(nrf, &nrf24l01_on_event, nrf);
+    g_txmessage.size = NRF24L01_MAX_PAYLOAD_SIZE;
+    g_txmessage.data[0] = 0;
 
     for (;;) {
-        uint8_t payload[NRF24L01_MAX_PAYLOAD_SIZE];
 
-        running = true;
+        t_act = xTaskGetTickCount();
 
-        nrf24l01_flush_tx(nrf);
-        nrf24l01_flush_rx(nrf);
+        nrf24l01_service_recv(svc, &g_rxmessage);
 
-        rpd = nrf24l01_channel_available(nrf);
-
-        if (rpd) {
-            nrf24l01_write(nrf, &payload[0], NRF24L01_MAX_PAYLOAD_SIZE);
+        if ((t_act - t_last) > 50) {
+            if (nrf24l01_service_send(svc, &g_txmessage) >= 0) {
+                g_txmessage.data[0]++;
+                t_last = t_act;
+            }
         }
 
-        running = false;
-
-        vTaskDelay(100);
+        vTaskDelay(1);
     }
-
-#endif
 }
 
 /* USER CODE END 0 */
@@ -144,23 +227,22 @@ int main(void)
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
-    {
-        nrf24l01_config_t config = { .address = 0xcecececece, .channel = 110, .retr_count = 3, .retr_delay = 750 };
+    nrf24l01_config_t config = { .address = 0xcecececece, .channel = 110, .retr_count = 3, .retr_delay = 250 };
 
-        nrf24l01_hal_attach(&nrf24l01, &nrf24l01_hal_stm32l4xx);
-        nrf24l01_initialize(&nrf24l01);
-        nrf24l01_configure(&nrf24l01, &config);
+    nrf24l01_hal_attach(&service.device, &nrf24l01_hal_stm32l4xx);
+    nrf24l01_initialize(&service.device);
+    nrf24l01_configure(&service.device, &config);
 
-        if (nrf24l01_probe(&nrf24l01) < 0) {
-            HAL_NVIC_SystemReset();
-        }
-
-        static StackType_t ITS[configMINIMAL_STACK_SIZE];
-        static StaticTask_t ITC;
-
-        xTaskCreateStatic(&nrf24l01_task_handler, "NRF24", configMINIMAL_STACK_SIZE, &nrf24l01, 6, ITS, &ITC);
-        vTaskStartScheduler();
+    if (nrf24l01_probe(&service.device) < 0) {
+        HAL_NVIC_SystemReset();
     }
+
+    static StackType_t ITS[configMINIMAL_STACK_SIZE];
+    static StaticTask_t ITC;
+
+    xTaskCreateStatic(&nrf24l01_task_handler, "NRF24", configMINIMAL_STACK_SIZE, &service, 6, ITS, &ITC);
+    vTaskStartScheduler();
+
 
   /* USER CODE END 2 */
 

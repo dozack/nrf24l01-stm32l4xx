@@ -4,3 +4,6 @@
 [submodule "freertos-systemview"]
 	path = freertos-systemview
 	url = https://github.com/dozack/freertos-systemview.git
+[submodule "canopen-stack"]
+	path = canopen-stack
+	url = https://github.com/dozack/canopen-stack.git

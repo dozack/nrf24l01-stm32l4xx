@@ -39,6 +39,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input.1635930174" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input"/>
 							</tool>
@@ -63,6 +65,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.598438028" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -87,6 +91,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp.1486456209" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp"/>
 							</tool>
@@ -109,10 +115,11 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="target/stm32f7xx|drivers/stm32f7xx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="nrf24l01"/>
-						<entry excluding="trace-systemview/Sample/FreeRTOSV10/Config|portable/GCC/ARM_CM7" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos-systemview"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry excluding="website|tools|testsuite|example|canopen/config" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="canopen-stack"/>
+						<entry excluding="trace-systemview/Sample/FreeRTOSV10/Config|portable/GCC/ARM_CM7" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos-systemview"/>
+						<entry excluding="target/stm32f7xx|drivers/stm32f7xx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="nrf24l01"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -153,6 +160,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input.560845152" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input"/>
 							</tool>
@@ -176,6 +185,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1958927757" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -199,6 +210,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/Sample/FreeRTOSV10}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/freertos-systemview/trace-systemview/SEGGER}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/canopen/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nrf24l01-stm32l4xx/canopen-stack/driver/include}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp.157650194" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp"/>
 							</tool>
@@ -221,10 +234,11 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="target/stm32f7xx|drivers/stm32f7xx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="nrf24l01"/>
-						<entry excluding="trace-systemview/Sample/FreeRTOSV10/Config|portable/GCC/ARM_CM7" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos-systemview"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry excluding="website|tools|testsuite|example|canopen/config" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="canopen-stack"/>
+						<entry excluding="trace-systemview/Sample/FreeRTOSV10/Config|portable/GCC/ARM_CM7" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos-systemview"/>
+						<entry excluding="target/stm32f7xx|drivers/stm32f7xx" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="nrf24l01"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
